@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-06-28 22:27:48 by Eclipse SUMO netedit Version 1.9.1
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <output>
+        <output-file value="C:\XJTLU\surf\for%20SURF%20students\sumoTest\sumot5.net.xml"/>
+    </output>
+
+    <processing>
+        <offset.disable-normalization value="true"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+    </junctions>
+
+    <netedit>
+        <route-files value="C:\XJTLU\surf\for%20SURF%20students\sumoTest\sumot5.rou.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vehicle id="vehicle_0" depart="0.00" color="cyan">
+        <route edges="gneE0 gneE2" color="cyan"/>
+    </vehicle>
+    <vehicle id="vehicle_1" depart="0.00">
+        <route edges="gneE2" color="yellow"/>
+    </vehicle>
+    <vehicle id="vehicle_2" depart="0.00">
+        <route edges="gneE0 gneE2" color="green"/>
+    </vehicle>
+    <vehicle id="vehicle_3" depart="0.00">
+        <route edges="gneE0 gneE2" color="blue"/>
+    </vehicle>
+</routes>
