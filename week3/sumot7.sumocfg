@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-07-04 17:31:35 by Eclipse SUMO GUI Version 1.9.1
+-->
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="C:\Users\23368\Desktop\sumoTest\sumot7.net.xml"/>
+
+    </input>
+<gui_only>
+<start value="t"/>
+<quit-on-end value="t"/>
+</gui_only>
+</configuration>
