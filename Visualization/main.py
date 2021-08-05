@@ -15,6 +15,7 @@ from sumolib import checkBinary
 
 global flag
 
+
 # 验证环境变量
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -31,6 +32,66 @@ def get_options():
     return options
 
 
+def returnLeaders(target_vehicle_id):
+    all_leader_vehicle = []
+    temp_vehicle_id = target_vehicle_id
+    while traci.vehicle.getLeader(temp_vehicle_id) is not None:
+        leader = list(traci.vehicle.getLeader(temp_vehicle_id))
+        all_leader_vehicle.append(leader)
+        temp_vehicle_id = leader[0]
+    return all_leader_vehicle
+
+
+def returnAllLeftLeaders(target_vehicle_id):
+    all_left_leader_vehicle = []
+    temp = target_vehicle_id
+    res = returnLeftLeaders(temp)
+    while res:
+        all_left_leader_vehicle.append(res)
+        temp = res[0][0]
+        res = returnLeftLeaders(temp)
+    return all_left_leader_vehicle
+
+
+def returnAllRightLeaders(target_vehicle_id):
+    all_right_leader_vehicle = []
+    temp = target_vehicle_id
+    res = returnRightLeaders(temp)
+    while res:
+        all_right_leader_vehicle.append(res)
+        temp = res[0][0]
+        res = returnRightLeaders(temp)
+    return all_right_leader_vehicle
+
+
+def returnLeftLeaders(target_vehicle_id):
+    all_left_leader_vehicle = []
+    temp_vehicle_id = target_vehicle_id
+    if traci.vehicle.getLeftLeaders(temp_vehicle_id) != ():
+        left_leader = list(traci.vehicle.getLeftLeaders(temp_vehicle_id))[0]
+        all_left_leader_vehicle.append(left_leader)
+        temp_vehicle_id = left_leader[0]
+        while traci.vehicle.getLeader(temp_vehicle_id) is not None:
+            leader = list(traci.vehicle.getLeader(temp_vehicle_id))
+            all_left_leader_vehicle.append(leader)
+            temp_vehicle_id = leader[0]
+    return all_left_leader_vehicle
+
+
+def returnRightLeaders(target_vehicle_id):
+    all_right_leader_vehicle = []
+    temp_vehicle_id = target_vehicle_id
+    if traci.vehicle.getRightLeaders(temp_vehicle_id) != ():
+        right_leader = list(traci.vehicle.getRightLeaders(temp_vehicle_id))[0]
+        all_right_leader_vehicle.append(right_leader)
+        temp_vehicle_id = right_leader[0]
+        while traci.vehicle.getLeader(temp_vehicle_id) is not None:
+            leader = list(traci.vehicle.getLeader(temp_vehicle_id))
+            all_right_leader_vehicle.append(leader)
+            temp_vehicle_id = leader[0]
+    return all_right_leader_vehicle
+
+
 # start sumo/sumo-gui
 def generate_routeFile():
     options = get_options()
@@ -43,7 +104,7 @@ def generate_routeFile():
     step = 0
 
     while step < 3600:
-        time.sleep(0.5)     # 每隔0，5秒运行下一步
+        time.sleep(0.5)
 
         global flag
         flag = 0
@@ -53,75 +114,19 @@ def generate_routeFile():
 
         traci.simulationStep()  # 当flag=0时，进行下一步仿真
         flag = 1
-
         step += 1
 
-        # ### 以下是可能会用到的检索信息的traci语句###
+        if step == 834:
+            print('start')
+            target_vehicle_id = 'veh669'  # 要获取信息的目标车辆ID
 
-        # all_vehicle_id = traci.vehicle.getIDList()  # 输出当前画面所有车辆ID
-        # print(all_vehicle_id)
+            all_left_leader_vehicle = returnAllLeftLeaders(target_vehicle_id)
+            all_right_leader_vehicle = returnAllRightLeaders(target_vehicle_id)
+            all_leader_vehicle = returnLeaders(target_vehicle_id)
 
-        # if step == 67:
-        #      target_vehicle_id = 'veh4'  # 要获取信息的目标车辆ID
-            # print()
-            # print('################## target car information ######')
-            # position = traci.vehicle.getPosition(target_vehicle_id)
-            # position3D = traci.vehicle.getPosition3D(target_vehicle_id)
-            # angle = traci.vehicle.getAngle(target_vehicle_id)
-            # # 车辆信号灯状况，对应https://sumo.dlr.de/docs/TraCI/Vehicle_Signalling.html
-            # signals = traci.vehicle.getSignals(target_vehicle_id)
-            # print('###### type:', traci.vehicle.getTypeID(target_vehicle_id))
-            # print('###### length:', traci.vehicle.getLength(target_vehicle_id), 'm')
-            # print('###### width:', traci.vehicle.getWidth(target_vehicle_id), 'm')
-            # print('###### height:', traci.vehicle.getHeight(target_vehicle_id), 'm')
-            # print('###### color:', traci.vehicle.getColor(target_vehicle_id))
-            # print('###### mileage:', '%.2f' % traci.vehicle.getDistance(target_vehicle_id), 'm')    # 行车里程
-            # print('###### speed:', '%.2f' % traci.vehicle.getSpeed(target_vehicle_id), 'm/s')
-            # print('###### real speed:', '%.2f' % traci.vehicle.getSpeedWithoutTraCI(
-            # target_vehicle_id), 'm/s')  # 如果不受traci控制
-            # print('###### max speed:', '%.2f' % traci.vehicle.getMaxSpeed(target_vehicle_id), 'm/s')
-            # print('###### maximum acceleration:', '%.2f' % traci.vehicle.getAccel(target_vehicle_id), 'm/s^2')
-            # print('###### maximum deceleration:', '%.2f' % traci.vehicle.getDecel(target_vehicle_id), 'm/s^2')
-            # # 一步的燃油量，费电量
-            # print('###### Fuel Consumption:', '%.2f' % traci.vehicle.getFuelConsumption(target_vehicle_id), 'ml/s')
-            # print('###### Electricity Consumption:',
-            #       '%.2f' % traci.vehicle.getElectricityConsumption(target_vehicle_id), 'Wh/s')
-            # print('###### lateral speed:',
-            #       '%.2f' % traci.vehicle.getLateralSpeed(target_vehicle_id), 'm/s')
-            # print('###### acceleration:', '%.2f' % traci.vehicle.getAcceleration(target_vehicle_id), 'm/s^2')
-            # print()
-
-            # print('################## road information ######')
-            # road_id = traci.vehicle.getRoadID(target_vehicle_id)
-            # lane_id = traci.vehicle.getLaneID(target_vehicle_id)
-            # lane_index = traci.vehicle.getLaneIndex(target_vehicle_id)
-            # route_id = traci.vehicle.getRouteID(target_vehicle_id)
-            # route_index = traci.vehicle.getRouteIndex(target_vehicle_id)
-            # edges_made_of_route = traci.vehicle.getRoute(target_vehicle_id)
-            # lane_position = traci.vehicle.getLanePosition(target_vehicle_id)  # 车前保险杠到所在车道最开始的距离
-            # print('###### which lane the car in:', lane_index + 1)
-            # print('###### number of lanes in current road:', traci.edge.getLaneNumber(road_id))
-            # print('###### current lane length:', traci.lane.getLength(lane_id), 'm')
-            # print('###### current lane width:', traci.lane.getWidth(lane_id), 'm')
-            #
-            # person_road_id = traci.person.getRoadID('ped11')
-            # print(person_road_id)
-            # print()
-
-            # print('################## surrounding information ######')
-            # # traci.vehicle.getNeighbors(target_vehicle_id, 1)
-            # next_stop = traci.vehicle.getNextStops(target_vehicle_id)
-            # if not (traci.vehicle.getNextTLS(target_vehicle_id) is None):
-            #     # next_TLS = list(traci.vehicle.getNextTLS(target_vehicle_id))[0][0]
-            #     # edges_made_of_TLS = traci.trafficlight.getControlledLanes(next_TLS)
-            #     print('###### next traffic lights:', traci.vehicle.getNextTLS(target_vehicle_id))
-            #     # print('###### traffic time left:', traci.trafficlight.getNextSwitch(next_TLS)-step)
-            # if not (traci.vehicle.getLeader(target_vehicle_id) is None):
-            #     print('###### distance of front car:', '%.2f' % traci.vehicle.getLeader(target_vehicle_id)[1], 'm')
-            # if not (traci.vehicle.getFollower(target_vehicle_id) is None):
-            #     print('###### distance of back car:', '%.2f' % traci.vehicle.getFollower(target_vehicle_id)[1], 'm')
-            #
-            # print()
+            print(all_left_leader_vehicle)
+            print(all_leader_vehicle)
+            print(all_right_leader_vehicle)
 
     traci.close()
 
@@ -320,46 +325,99 @@ def setWindow():
 
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, projection)
 
-
         # the main application loop
         while not glfw.window_should_close(window):
-            time.sleep(0.5)
+            time.sleep(0.3)
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             global flag
+            # flag = 1
             while flag == 0:    # 当flag=0，generate_routeFile()正在通过traci向sumo发送请求
                 print('waiting for gui')
 
             road_number = traci.edge.getLaneNumber(traci.vehicle.getRoadID(target_vehicle_id))
             lane_index = traci.vehicle.getLaneIndex(target_vehicle_id) + 1
+            # 目标车辆前面的车，list（id，dist）
+            all_leader_vehicle = returnLeaders(target_vehicle_id)
+            # 目标车辆左边的车，list(最邻近的左车道list(id,dist)，次邻近的左车道list(id,dist))
+            all_left_leader_vehicle = returnAllLeftLeaders(target_vehicle_id)
+            all_right_leader_vehicle = returnAllRightLeaders(target_vehicle_id)
+            print(all_left_leader_vehicle)
 
+            # road_number = 3
+            # lane_index = 2
             flag = 0
 
             # draw the car
             glBindVertexArray(VAO[0])
             glBindTexture(GL_TEXTURE_2D, textures[0])
-            x_pos = 0.0
-            # 目标车辆移动位置
-            if road_number % 2 == 0:
-                if lane_index <= road_number / 2:
-                    x_pos = ((road_number / 2 + 1)-lane_index) * 5 - 2.5
-                else:
-                    x_pos = (road_number / 2 - lane_index) * 5 + 2.5
-
-            if road_number % 2 == 1:
-                if lane_index == (road_number + 1) / 2:
-                    x_pos = 0
-                else:
-                    x_pos = ((road_number + 1) / 2 - lane_index) * 5
-
-            view = pyrr.matrix44.create_look_at(pyrr.Vector3([x_pos, 5, 20]), pyrr.Vector3([x_pos, 2, 0]),
+            # 目标车辆的位置
+            target_car_x_pos = calculateCarPosition(road_number, lane_index)
+            # 将目标车辆视角放在屏幕中心
+            view = pyrr.matrix44.create_look_at(pyrr.Vector3([target_car_x_pos, 0, 0]),
+                                                pyrr.Vector3([target_car_x_pos, 0, -20]),
                                                 pyrr.Vector3([0, 1, 0]))
             glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
+            # 绘制目标车辆前面的车
+            car_z_pos = 0
+            for item in all_leader_vehicle:
+                car_z_pos = car_z_pos + 0.9 * item[1] + 4.5
+                car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(target_car_x_pos, -1.5, -car_z_pos)]))
+                glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
+                glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
 
-            car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(x_pos, -1.5, 0)]))
-            glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
-            glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
+            # 绘制目标车辆左边所有的车
+            car_lane_index = lane_index
+            if all_left_leader_vehicle:
+                car_z_pos = 0
+                item = all_left_leader_vehicle[0]
+                car_lane_index = car_lane_index + 1
+                car_x_pos = calculateCarPosition(road_number, car_lane_index)
+                for inner_item in item:
+                    car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
+                    car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                    glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
+                    glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
+
+            if all_left_leader_vehicle[1:]:
+                count = 1
+                for item in all_left_leader_vehicle[1:]:
+                    car_z_pos = all_left_leader_vehicle[count-1][0][1]
+                    car_lane_index = car_lane_index + 1
+                    car_x_pos = calculateCarPosition(road_number, car_lane_index)
+                    for inner_item in item:
+                        car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
+                        car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                        glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
+                        glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
+                    count = count + 1
+
+            # 绘制目标车辆右边所有的车
+            car_lane_index = lane_index
+            if all_right_leader_vehicle:
+                car_z_pos = 0
+                item = all_right_leader_vehicle[0]
+                car_lane_index = car_lane_index - 1
+                car_x_pos = calculateCarPosition(road_number, car_lane_index)
+                for inner_item in item:
+                    car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
+                    car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                    glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
+                    glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
+
+            if all_right_leader_vehicle[1:]:
+                count = 1
+                for item in all_right_leader_vehicle[1:]:
+                    car_z_pos = all_right_leader_vehicle[count-1][0][1]
+                    car_lane_index = car_lane_index - 1
+                    car_x_pos = calculateCarPosition(road_number, car_lane_index)
+                    for inner_item in item:
+                        car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
+                        car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                        glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
+                        glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
+                    count = count + 1
 
             # draw the grass
             glBindVertexArray(VAO[2])
@@ -405,6 +463,21 @@ def setWindow():
     Button_2 = tk.Button(root, text="Reset", command=reset, bg="white")
     Button_2.place(x=160, y=40)
     root.mainloop()  # 进入消息循环
+
+
+def calculateCarPosition(road_number, lane_index):
+    if road_number % 2 == 0:
+        if lane_index <= road_number / 2:
+            return ((road_number / 2 + 1) - lane_index) * 5 - 2.5
+        else:
+            return (road_number / 2 - lane_index) * 5 + 2.5
+
+    if road_number % 2 == 1:
+        if lane_index == (road_number + 1) / 2:
+            return 0
+        else:
+            return ((road_number + 1) / 2 - lane_index) * 5
+
 
 
 if __name__ == "__main__":
