@@ -104,7 +104,7 @@ def generate_routeFile():
     step = 0
 
     while step < 3600:
-        time.sleep(0.5)
+        time.sleep(0.3)
 
         global flag
         flag = 0
@@ -114,20 +114,14 @@ def generate_routeFile():
 
         traci.simulationStep()  # 当flag=0时，进行下一步仿真
         flag = 1
+
+
+        # if (step > 15) & (step < 20):
+        #     print('start')
+        #     target_vehicle_id = 'veh0'  # 要获取信息的目标车辆ID
+        #     print('###### speed:', '%.2f' % traci.vehicle.getSpeed(target_vehicle_id), 'm/s')
+
         step += 1
-
-        if step == 834:
-            print('start')
-            target_vehicle_id = 'veh669'  # 要获取信息的目标车辆ID
-
-            all_left_leader_vehicle = returnAllLeftLeaders(target_vehicle_id)
-            all_right_leader_vehicle = returnAllRightLeaders(target_vehicle_id)
-            all_leader_vehicle = returnLeaders(target_vehicle_id)
-
-            print(all_left_leader_vehicle)
-            print(all_leader_vehicle)
-            print(all_right_leader_vehicle)
-
     traci.close()
 
 
@@ -228,14 +222,15 @@ def setWindow():
         car_indices, car_buffer = ObjLoader.load_model("meshes/car.obj")
         road_indices, road_buffer = ObjLoader.load_model("meshes/floor.obj")
         grass_indices, grass_buffer = ObjLoader.load_model("meshes/floor.obj")
+        tree_indices, tree_buffer = ObjLoader.load_model("meshes/tree.obj")
 
         shader = compileProgram(compileShader(vertex_src, GL_VERTEX_SHADER),
                                 compileShader(fragment_src, GL_FRAGMENT_SHADER))
 
 
         # VAO and VBO
-        VAO = glGenVertexArrays(3)
-        VBO = glGenBuffers(3)
+        VAO = glGenVertexArrays(4)
+        VBO = glGenBuffers(4)
         # EBO = glGenBuffers(1)
 
         # car VAO
@@ -288,6 +283,21 @@ def setWindow():
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, grass_buffer.itemsize * 8, ctypes.c_void_p(20))
         glEnableVertexAttribArray(2)
 
+        # tree VAO
+        glBindVertexArray(VAO[3])
+        # tree Vertex Buffer Object
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[3])
+        glBufferData(GL_ARRAY_BUFFER, tree_buffer.nbytes, tree_buffer, GL_STATIC_DRAW)
+        # tree vertices
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, tree_buffer.itemsize * 8, ctypes.c_void_p(0))
+        # tree textures
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, tree_buffer.itemsize * 8, ctypes.c_void_p(12))
+        # tree normals
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, tree_buffer.itemsize * 8, ctypes.c_void_p(20))
+        glEnableVertexAttribArray(2)
+
         # 导入纹理
         textures = glGenTextures(14)
         load_texture("meshes/car.png", textures[0])
@@ -316,8 +326,10 @@ def setWindow():
 
         projection = pyrr.matrix44.create_perspective_projection_matrix(45, 1280 / 720, 0.1, 100)
 
-        grass_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, -2.1, 0]))
+        grass_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
         grass_scale = pyrr.matrix44.create_from_scale(pyrr.Vector3([5, 0, 5]))
+
+        tree_scale = pyrr.matrix44.create_from_scale(pyrr.Vector3([0.5, 0.5, 0.5]))
 
         model_loc = glGetUniformLocation(shader, "model")
         proj_loc = glGetUniformLocation(shader, "projection")
@@ -325,9 +337,15 @@ def setWindow():
 
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, projection)
 
+        # test speed
+
+        tree_move = 0
+        tree_z_pos = 0
+        road_move = 0
+
         # the main application loop
         while not glfw.window_should_close(window):
-            time.sleep(0.3)
+            time.sleep(0.2)
             glfw.poll_events()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -343,27 +361,33 @@ def setWindow():
             # 目标车辆左边的车，list(最邻近的左车道list(id,dist)，次邻近的左车道list(id,dist))
             all_left_leader_vehicle = returnAllLeftLeaders(target_vehicle_id)
             all_right_leader_vehicle = returnAllRightLeaders(target_vehicle_id)
-            print(all_left_leader_vehicle)
+            speed = traci.vehicle.getSpeed(target_vehicle_id)
+            print('###### speed:', '%.2f' % traci.vehicle.getSpeed(target_vehicle_id), 'm/s')
 
-            # road_number = 3
+            # road_number = 5
             # lane_index = 2
             flag = 0
 
-            # draw the car
-            glBindVertexArray(VAO[0])
-            glBindTexture(GL_TEXTURE_2D, textures[0])
             # 目标车辆的位置
             target_car_x_pos = calculateCarPosition(road_number, lane_index)
             # 将目标车辆视角放在屏幕中心
-            view = pyrr.matrix44.create_look_at(pyrr.Vector3([target_car_x_pos, 0, 0]),
-                                                pyrr.Vector3([target_car_x_pos, 0, -20]),
+            view = pyrr.matrix44.create_look_at(pyrr.Vector3([target_car_x_pos, 1, 0]),
+                                                pyrr.Vector3([target_car_x_pos, 1, -20]),
                                                 pyrr.Vector3([0, 1, 0]))
+            # view = pyrr.matrix44.create_look_at(pyrr.Vector3([-15, -1, 0]),
+            #                                     pyrr.Vector3([0, 0, -20]),
+            #                                     pyrr.Vector3([0, 1, 0]))
             glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
+
+
             # 绘制目标车辆前面的车
+            glBindVertexArray(VAO[0])
+            glBindTexture(GL_TEXTURE_2D, textures[0])
+
             car_z_pos = 0
             for item in all_leader_vehicle:
                 car_z_pos = car_z_pos + 0.9 * item[1] + 4.5
-                car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(target_car_x_pos, -1.5, -car_z_pos)]))
+                car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(target_car_x_pos, 0.3, -car_z_pos)]))
                 glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
                 glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
 
@@ -376,7 +400,7 @@ def setWindow():
                 car_x_pos = calculateCarPosition(road_number, car_lane_index)
                 for inner_item in item:
                     car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
-                    car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                    car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, 0.3, -car_z_pos)]))
                     glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
                     glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
 
@@ -388,7 +412,7 @@ def setWindow():
                     car_x_pos = calculateCarPosition(road_number, car_lane_index)
                     for inner_item in item:
                         car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
-                        car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                        car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, 0.3, -car_z_pos)]))
                         glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
                         glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
                     count = count + 1
@@ -402,7 +426,7 @@ def setWindow():
                 car_x_pos = calculateCarPosition(road_number, car_lane_index)
                 for inner_item in item:
                     car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
-                    car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                    car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, 0.3, -car_z_pos)]))
                     glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
                     glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
 
@@ -414,7 +438,7 @@ def setWindow():
                     car_x_pos = calculateCarPosition(road_number, car_lane_index)
                     for inner_item in item:
                         car_z_pos = car_z_pos + 0.9 * inner_item[1] + 4.5
-                        car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, -1.5, -car_z_pos)]))
+                        car_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(car_x_pos, 0.3, -car_z_pos)]))
                         glUniformMatrix4fv(model_loc, 1, GL_FALSE, car_pos)
                         glDrawArrays(GL_TRIANGLES, 0, len(car_indices))
                     count = count + 1
@@ -426,9 +450,33 @@ def setWindow():
             glUniformMatrix4fv(model_loc, 1, GL_FALSE, model)
             glDrawArrays(GL_TRIANGLES, 0, len(grass_buffer))
 
+            # draw tree
+            glBindVertexArray(VAO[3])
+            glBindTexture(GL_TEXTURE_2D, 0)  # 因为还没给tree找到合适纹理或者导入.mtl文件，暂时解绑纹理
+            if (tree_z_pos - tree_move) <= -64:
+                tree_move = 0
+            tree_move = tree_move + 0.1 * speed
+            road_move = road_move + 0.1 * speed
+            tree_z_pos = 8
+            tree_x_pos = calculateCarPosition(road_number, road_number)
+            for i in range(0, 8):
+
+                tree_z_pos = tree_z_pos - 8
+                tree_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(tree_x_pos-5, -0.3, tree_z_pos + tree_move)]))
+                model = pyrr.matrix44.multiply(tree_scale, tree_pos)
+                glUniformMatrix4fv(model_loc, 1, GL_FALSE, model)
+                glDrawArrays(GL_TRIANGLES, 0, len(tree_indices))
+
+                tree_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([(-tree_x_pos+5, -0.3, tree_z_pos + tree_move)]))
+                model = pyrr.matrix44.multiply(tree_scale, tree_pos)
+                glUniformMatrix4fv(model_loc, 1, GL_FALSE, model)
+                glDrawArrays(GL_TRIANGLES, 0, len(tree_indices))
+
             # draw the road
-            road_scale = pyrr.matrix44.create_from_scale(pyrr.Vector3([0.1 * road_number, 0, 5]))
-            road_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, -2, 0]))
+            if road_move >= 36:
+                road_move = 0
+            road_scale = pyrr.matrix44.create_from_scale(pyrr.Vector3([0.1 * road_number, 0, -5]))
+            road_pos = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0.1, 0 + road_move]))
             model = pyrr.matrix44.multiply(road_scale, road_pos)
             glBindVertexArray(VAO[1])
             if road_number == 2:
@@ -447,6 +495,7 @@ def setWindow():
             glDrawArrays(GL_TRIANGLES, 0, len(road_indices))
 
             glfw.swap_buffers(window)
+
 
         # terminate glfw, free up allocated resources
         glfw.terminate()
@@ -477,7 +526,6 @@ def calculateCarPosition(road_number, lane_index):
             return 0
         else:
             return ((road_number + 1) / 2 - lane_index) * 5
-
 
 
 if __name__ == "__main__":
