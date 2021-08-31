@@ -1,0 +1,73 @@
+可能会用到的有用的traci语句
+            target_vehicle_id = 'veh669'  # 要获取信息的目标车辆ID
+            # print()
+            # print('################## target car information ######')
+            # position = traci.vehicle.getPosition(target_vehicle_id)
+            # position3D = traci.vehicle.getPosition3D(target_vehicle_id)
+            # angle = traci.vehicle.getAngle(target_vehicle_id)
+            # # 车辆信号灯状况，对应https://sumo.dlr.de/docs/TraCI/Vehicle_Signalling.html
+            # signals = traci.vehicle.getSignals(target_vehicle_id)
+            # print('###### type:', traci.vehicle.getTypeID(target_vehicle_id))
+            # print('###### length:', traci.vehicle.getLength(target_vehicle_id), 'm')
+            # print('###### width:', traci.vehicle.getWidth(target_vehicle_id), 'm')
+            # print('###### height:', traci.vehicle.getHeight(target_vehicle_id), 'm')
+            # print('###### color:', traci.vehicle.getColor(target_vehicle_id))
+            # print('###### mileage:', '%.2f' % traci.vehicle.getDistance(target_vehicle_id), 'm')    # 行车里程
+            # print('###### speed:', '%.2f' % traci.vehicle.getSpeed(target_vehicle_id), 'm/s')
+            # print('###### real speed:', '%.2f' % traci.vehicle.getSpeedWithoutTraCI(
+            # target_vehicle_id), 'm/s')  # 如果不受traci控制
+            # print('###### max speed:', '%.2f' % traci.vehicle.getMaxSpeed(target_vehicle_id), 'm/s')
+            # print('###### maximum acceleration:', '%.2f' % traci.vehicle.getAccel(target_vehicle_id), 'm/s^2')
+            # print('###### maximum deceleration:', '%.2f' % traci.vehicle.getDecel(target_vehicle_id), 'm/s^2')
+            # # 一步的燃油量，费电量
+            # print('###### Fuel Consumption:', '%.2f' % traci.vehicle.getFuelConsumption(target_vehicle_id), 'ml/s')
+            # print('###### Electricity Consumption:',
+            #       '%.2f' % traci.vehicle.getElectricityConsumption(target_vehicle_id), 'Wh/s')
+            # print('###### lateral speed:',
+            #       '%.2f' % traci.vehicle.getLateralSpeed(target_vehicle_id), 'm/s')
+            # print('###### acceleration:', '%.2f' % traci.vehicle.getAcceleration(target_vehicle_id), 'm/s^2')
+            # print()
+
+            print('################## road information ######')
+            road_id = traci.vehicle.getRoadID(target_vehicle_id)
+            lane_id = traci.vehicle.getLaneID(target_vehicle_id)
+            lane_index = traci.vehicle.getLaneIndex(target_vehicle_id)
+            route_id = traci.vehicle.getRouteID(target_vehicle_id)
+            route_index = traci.vehicle.getRouteIndex(target_vehicle_id)
+            edges_made_of_route = traci.vehicle.getRoute(target_vehicle_id)
+            lane_position = traci.vehicle.getLanePosition(target_vehicle_id)  # 车前保险杠到所在车道最开始的距离
+            print('###### which lane the car in:', lane_index + 1)
+            print('###### number of lanes in current road:', traci.edge.getLaneNumber(road_id))
+            print('###### current lane length:', traci.lane.getLength(lane_id), 'm')
+            print('###### current lane width:', traci.lane.getWidth(lane_id), 'm')
+
+            person_road_id = traci.person.getRoadID('ped11')
+            print(person_road_id)
+            print()
+
+            # print('################## surrounding information ######')
+
+            # 获取邻近车道的其他车辆
+            all_left_leader_vehicle = returnAllLeftLeaders(target_vehicle_id)
+            all_right_leader_vehicle = returnAllRightLeaders(target_vehicle_id)
+            all_leader_vehicle = returnLeaders(target_vehicle_id)
+
+            # print(traci.vehicle.getNeighbors(target_vehicle_id, 0))
+            # print(left_leader_vehicle_1)
+            # print(left_leader_vehicle_2)
+            print(all_left_leader_vehicle)
+            print(all_leader_vehicle)
+            print(all_right_leader_vehicle)
+
+            # next_stop = traci.vehicle.getNextStops(target_vehicle_id)
+            # if not (traci.vehicle.getNextTLS(target_vehicle_id) is None):
+            #     # next_TLS = list(traci.vehicle.getNextTLS(target_vehicle_id))[0][0]
+            #     # edges_made_of_TLS = traci.trafficlight.getControlledLanes(next_TLS)
+            #     print('###### next traffic lights:', traci.vehicle.getNextTLS(target_vehicle_id))
+            #     # print('###### traffic time left:', traci.trafficlight.getNextSwitch(next_TLS)-step)
+            # if not (traci.vehicle.getLeader(target_vehicle_id) is None):
+            #     print('###### distance of front car:', '%.2f' % traci.vehicle.getLeader(target_vehicle_id)[1], 'm')
+            # if not (traci.vehicle.getFollower(target_vehicle_id) is None):
+            #     print('###### distance of back car:', '%.2f' % traci.vehicle.getFollower(target_vehicle_id)[1], 'm')
+            #
+            # print()
